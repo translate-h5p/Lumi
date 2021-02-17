@@ -33,9 +33,11 @@ const useStyles = makeStyles((theme: Theme) =>
 
 declare var window: {
     lumi_xapi: any;
+    lumi_listener: boolean;
     H5PIntegration: {
         contents: any;
     };
+    H5P: any;
 };
 
 function removeFile(obj: any) {
@@ -58,6 +60,26 @@ export default function App() {
 
     const [open, setOpen] = React.useState(false);
     const [name, setName] = React.useState('');
+
+    window.lumi_xapi = window.lumi_xapi || [];
+    if (window.H5P) {
+        if (!window.lumi_listener) {
+            window.H5P.externalDispatcher.on('xAPI', (event: any) => {
+                window.lumi_xapi.push({
+                    ...event.data.statement,
+                    timeStamp: new Date().getTime()
+                });
+
+                if (
+                    event.data.statement.verb.id ===
+                    'http://adlnet.gov/expapi/verbs/completed'
+                ) {
+                    setOpen(true);
+                }
+            });
+            window.lumi_listener = true;
+        }
+    }
 
     const handleClickOpen = () => {
         setOpen(true);
